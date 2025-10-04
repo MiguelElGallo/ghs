@@ -17,10 +17,10 @@ class TestTestconf:
     def test_testconf_success(self, mocker):
         """Test successful testconf execution."""
         # Mock all the dependencies
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
-        mock_run_gh_command = mocker.patch("ghs.commands.run_gh_command")
+        mock_run_gh_command = mocker.patch("ghss.commands.run_gh_command")
 
         # Mock the secret list response
         mock_list_result = MagicMock()
@@ -35,8 +35,8 @@ class TestTestconf:
         mock_run_gh_command.side_effect = run_gh_side_effect
 
         # Mock random string generation
-        mocker.patch("ghs.commands.random.choices", return_value=list("abc12345"))
-        mocker.patch("ghs.commands.time.sleep")
+        mocker.patch("ghss.commands.random.choices", return_value=list("abc12345"))
+        mocker.patch("ghss.commands.time.sleep")
 
         result = runner.invoke(app, ["testconf"])
 
@@ -46,7 +46,7 @@ class TestTestconf:
 
     def test_testconf_auth_failure(self, mocker):
         """Test testconf when authentication fails."""
-        mocker.patch("ghs.commands.check_gh_auth", side_effect=typer.Exit(1))
+        mocker.patch("ghss.commands.check_gh_auth", side_effect=typer.Exit(1))
 
         result = runner.invoke(app, ["testconf"])
 
@@ -54,10 +54,10 @@ class TestTestconf:
 
     def test_testconf_secret_not_found(self, mocker):
         """Test testconf when secret is not found after creation."""
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
-        mock_run_gh_command = mocker.patch("ghs.commands.run_gh_command")
+        mock_run_gh_command = mocker.patch("ghss.commands.run_gh_command")
 
         # Mock the secret list response without the test secret
         mock_list_result = MagicMock()
@@ -70,8 +70,8 @@ class TestTestconf:
 
         mock_run_gh_command.side_effect = run_gh_side_effect
 
-        mocker.patch("ghs.commands.random.choices", return_value=list("abc12345"))
-        mocker.patch("ghs.commands.time.sleep")
+        mocker.patch("ghss.commands.random.choices", return_value=list("abc12345"))
+        mocker.patch("ghss.commands.time.sleep")
 
         result = runner.invoke(app, ["testconf"])
 
@@ -87,15 +87,15 @@ class TestGet:
         """Test successful get command execution."""
         env_file = tmp_path / ".env"
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
         mock_result = MagicMock()
         mock_result.stdout = json.dumps(
             [{"name": "SECRET1"}, {"name": "SECRET2"}, {"name": "SECRET3"}]
         )
 
-        mocker.patch("ghs.commands.run_gh_command", return_value=mock_result)
+        mocker.patch("ghss.commands.run_gh_command", return_value=mock_result)
 
         result = runner.invoke(app, ["get", "-f", str(env_file)])
 
@@ -112,13 +112,13 @@ class TestGet:
         """Test get command when no secrets exist."""
         env_file = tmp_path / ".env"
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
         mock_result = MagicMock()
         mock_result.stdout = json.dumps([])
 
-        mocker.patch("ghs.commands.run_gh_command", return_value=mock_result)
+        mocker.patch("ghss.commands.run_gh_command", return_value=mock_result)
 
         result = runner.invoke(app, ["get", "-f", str(env_file)])
 
@@ -128,7 +128,7 @@ class TestGet:
 
     def test_get_auth_failure(self, mocker):
         """Test get command when authentication fails."""
-        mocker.patch("ghs.commands.check_gh_auth", side_effect=typer.Exit(1))
+        mocker.patch("ghss.commands.check_gh_auth", side_effect=typer.Exit(1))
 
         result = runner.invoke(app, ["get"])
 
@@ -136,14 +136,14 @@ class TestGet:
 
     def test_get_default_file(self, mocker):
         """Test get command with default file name."""
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
         mock_result = MagicMock()
         mock_result.stdout = json.dumps([{"name": "SECRET1"}])
 
-        mocker.patch("ghs.commands.run_gh_command", return_value=mock_result)
-        mock_write = mocker.patch("ghs.commands.write_env_file")
+        mocker.patch("ghss.commands.run_gh_command", return_value=mock_result)
+        mock_write = mocker.patch("ghss.commands.write_env_file")
 
         result = runner.invoke(app, ["get"])
 
@@ -161,10 +161,10 @@ class TestSet:
         env_file = tmp_path / ".env"
         env_file.write_text("KEY1=value1\nKEY2=value2\n")
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
-        mock_run_gh_command = mocker.patch("ghs.commands.run_gh_command")
+        mock_run_gh_command = mocker.patch("ghss.commands.run_gh_command")
 
         result = runner.invoke(app, ["set", "-f", str(env_file)])
 
@@ -199,8 +199,8 @@ class TestSet:
         env_file = tmp_path / ".env"
         env_file.write_text("")
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
         result = runner.invoke(app, ["set", "-f", str(env_file)])
 
@@ -211,8 +211,8 @@ class TestSet:
         """Test set command when file doesn't exist."""
         non_existent = tmp_path / "nonexistent.env"
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
         result = runner.invoke(app, ["set", "-f", str(non_existent)])
 
@@ -222,7 +222,7 @@ class TestSet:
 
     def test_set_auth_failure(self, mocker):
         """Test set command when authentication fails."""
-        mocker.patch("ghs.commands.check_gh_auth", side_effect=typer.Exit(1))
+        mocker.patch("ghss.commands.check_gh_auth", side_effect=typer.Exit(1))
 
         result = runner.invoke(app, ["set"])
 
@@ -240,9 +240,9 @@ class TestSet:
             env_file = tmp_path / ".env"
             env_file.write_text("KEY1=value1\n")
 
-            mocker.patch("ghs.commands.check_gh_auth")
-            mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
-            mocker.patch("ghs.commands.run_gh_command")
+            mocker.patch("ghss.commands.check_gh_auth")
+            mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
+            mocker.patch("ghss.commands.run_gh_command")
 
             result = runner.invoke(app, ["set"])
 
@@ -256,10 +256,10 @@ class TestSet:
         env_file = tmp_path / ".env"
         env_file.write_text("KEY1=value1\nKEY2=\nKEY3=value3\n")
 
-        mocker.patch("ghs.commands.check_gh_auth")
-        mocker.patch("ghs.commands.get_current_repo", return_value="owner/repo")
+        mocker.patch("ghss.commands.check_gh_auth")
+        mocker.patch("ghss.commands.get_current_repo", return_value="owner/repo")
 
-        mock_run_gh_command = mocker.patch("ghs.commands.run_gh_command")
+        mock_run_gh_command = mocker.patch("ghss.commands.run_gh_command")
 
         result = runner.invoke(app, ["set", "-f", str(env_file)])
 

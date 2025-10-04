@@ -132,7 +132,7 @@ class TestGetCurrentRepo:
         mock_result.stdout = "owner/repo\n"
 
         mock_run_gh_command = mocker.patch(
-            "ghs.gh_utils.run_gh_command", return_value=mock_result
+            "ghss.gh_utils.run_gh_command", return_value=mock_result
         )
 
         result = get_current_repo()
@@ -148,7 +148,7 @@ class TestGetCurrentRepo:
         mock_result.returncode = 0
         mock_result.stdout = "  owner/repo  \n"
 
-        mocker.patch("ghs.gh_utils.run_gh_command", return_value=mock_result)
+        mocker.patch("ghss.gh_utils.run_gh_command", return_value=mock_result)
 
         result = get_current_repo()
 
@@ -156,7 +156,7 @@ class TestGetCurrentRepo:
 
     def test_get_current_repo_failure(self, mocker):
         """Test handling of failure to get repository."""
-        mocker.patch("ghs.gh_utils.run_gh_command", side_effect=typer.Exit(1))
+        mocker.patch("ghss.gh_utils.run_gh_command", side_effect=typer.Exit(1))
 
         with pytest.raises(typer.Exit) as exc_info:
             get_current_repo()
