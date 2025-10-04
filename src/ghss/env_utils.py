@@ -28,14 +28,16 @@ def load_env_file(file: str) -> dict[str, str]:
     return {k: v for k, v in secrets.items() if k and v}
 
 
-def write_env_file(file: str, secrets: list[dict[str, str]]) -> None:
-    """Write secret names to a .env file.
+def write_env_file(file: str, variables: list[dict[str, str]]) -> None:
+    """Write variable names and values to a .env file.
     
     Args:
         file: Path to the output .env file
-        secrets: List of secret dictionaries with 'name' keys
+        variables: List of variable dictionaries with 'name' and 'value' keys
     """
     output_path = Path(file)
     with output_path.open("w") as f:
-        for secret in secrets:
-            f.write(f"{secret['name']}=\n")
+        for var in variables:
+            name = var.get('name', '')
+            value = var.get('value', '')
+            f.write(f"{name}={value}\n")

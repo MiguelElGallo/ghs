@@ -3,23 +3,36 @@
 [![Tests](https://github.com/MiguelElGallo/ghs/actions/workflows/tests.yml/badge.svg)](https://github.com/MiguelElGallo/ghs/actions/workflows/tests.yml)
 [![Publish to PyPI](https://github.com/MiguelElGallo/ghs/actions/workflows/publish-to-pypi.yml/badge.svg)](https://github.com/MiguelElGallo/ghs/actions/workflows/publish-to-pypi.yml)
 
-Sync your `.env` files with GitHub Secrets in both directions using a simple CLI tool.
+Sync your `.env` files with GitHub Repository Variables in both directions using a simple CLI tool.
 
 ![alt text](media/ghss.png)
 
+## ⚠️ IMPORTANT SECURITY NOTICE
+
+**This tool uses GitHub Repository Variables, NOT GitHub Secrets.**
+
+- **Variables are NOT encrypted** and their values can be retrieved via the GitHub API
+- **Repository collaborators may have access** to variable values depending on permissions
+- **Do NOT store sensitive secrets** like API keys, passwords, or tokens using this tool
+- For sensitive data, use GitHub Secrets directly or a proper secrets management solution
+
+See [GitHub's documentation on configuration variables](https://docs.github.com/en/actions/learn-github-actions/variables#creating-configuration-variables-for-a-repository) for more information about security implications.
+
 ## What it does
 
-`ghss` synchronizes environment variables between your local `.env` files and GitHub repository secrets. You can push secrets from your local environment to GitHub or pull secret names from GitHub to create a template `.env` file.
+`ghss` synchronizes environment variables between your local `.env` files and GitHub repository variables. You can push variables from your local environment to GitHub or pull variable names and values from GitHub to create a `.env` file.
 
 ### Typical Use Case
 
 You start working on a new repository and create a `.env` file with all your configuration. Later, you move to another PC, clone your repo, and notice the `.env` file is missing (because it's gitignored). With `ghss`, you can:
 
-1. **Push secrets to GitHub** from your first PC: `uvx --refresh ghss set`
-2. **Pull secret names from GitHub** on your second PC: `uvx --refresh ghss get`
-3. Fill in the values and you're ready to work
+1. **Push variables to GitHub** from your first PC: `uvx --refresh ghss set`
+2. **Pull variables from GitHub** on your second PC: `uvx --refresh ghss get`
+3. You're ready to work with your configuration restored
 
-This leverages GitHub Secrets to safely store your environment configuration without committing sensitive data to your repository.
+This leverages GitHub Repository Variables to store your environment configuration without committing data to your repository.
+
+**Note:** This is suitable for non-sensitive configuration values. For sensitive data, use proper secrets management.
 
 ## Installation
 
@@ -51,7 +64,7 @@ gh auth login
 
 ### `testconf`
 
-Test your configuration by creating, reading, and deleting a test secret in your repository.
+Test your configuration by creating, reading, and deleting a test variable in your repository.
 
 **Usage:**
 ```bash
@@ -63,14 +76,15 @@ uvx --refresh ghss testconf
 Testing gh CLI authentication...
 ✓ gh CLI is authenticated
 ✓ Using repository: MiguelElGallo/ghs
-Creating test secret: ghs_test_secret_abc12345...
-✓ Test secret created
-Verifying test secret exists...
-Waiting 3 seconds before trying to get the secret...
-✓ Test secret found in repository
-Deleting test secret...
-✓ Test secret deleted
-✓ All tests passed successfully
+Creating test variable: GHS_TEST_VARIABLE_abc12345...
+✓ Test variable created
+Verifying test variable exists...
+Waiting 3 seconds before trying to get the variable...
+✓ Test variable verified
+✓ Test variable value verified
+Deleting test variable...
+✓ Test variable deleted
+✓ All tests passed! Configuration is working correctly.
 ```
 
 **Options:**
@@ -80,9 +94,11 @@ Deleting test secret...
 
 ### `get`
 
-Get all secret names from the repository and write them to a `.env` file.
+Get all variables from the repository and write them to a `.env` file with their values.
 
-**Note:** GitHub Secrets API does not allow retrieving secret values for security reasons. This command only retrieves secret names and creates a template file where you need to fill in the values manually.
+**Note:** Unlike GitHub Secrets, variable values CAN be retrieved from the API. The values will be written to your local `.env` file.
+
+**⚠️ Security Warning:** Variable values are retrievable and may be visible to repository collaborators.
 
 **Usage:**
 ```bash
@@ -93,14 +109,13 @@ uvx --refresh ghss get -f custom.env
 **Example output:**
 ```
 Checking gh CLI authentication...
-Getting secrets from repository: MiguelElGallo/ghs
-Found 3 secret(s)
+Getting variables from repository: MiguelElGallo/ghs
+Found 3 variable(s)
+Writing variables to .env...
+✓ Variables written to .env
 
-Note: Secret values cannot be retrieved from GitHub.
-Writing secret names to .env...
-✓ Secret names written to .env
-
-Please fill in the values manually.
+⚠️  WARNING: Variable values are retrievable via API and may be visible to repository collaborators!
+See https://docs.github.com/en/actions/learn-github-actions/variables#creating-configuration-variables-for-a-repository for more info.
 ```
 
 **Options:**
@@ -109,16 +124,18 @@ Please fill in the values manually.
 
 **Generated file format:**
 ```env
-API_KEY=
-DATABASE_URL=
-SECRET_TOKEN=
+API_KEY=your_api_key_value
+DATABASE_URL=postgres://localhost/db
+APP_ENV=development
 ```
 
 ---
 
 ### `set`
 
-Read a `.env` file and set the secrets in the repository.
+Read a `.env` file and set the variables in the repository.
+
+**⚠️ Security Warning:** All values will be stored as repository variables and may be accessible to collaborators. You will be prompted for confirmation before proceeding.
 
 **Usage:**
 ```bash
@@ -129,13 +146,20 @@ uvx --refresh ghss set -f custom.env
 **Example output:**
 ```
 Checking gh CLI authentication...
-Setting secrets in repository: MiguelElGallo/ghs
-Found 3 secret(s) to set
-Setting secret: API_KEY...
-Setting secret: DATABASE_URL...
-Setting secret: SECRET_TOKEN...
+Found 3 variable(s) to set in repository: MiguelElGallo/ghs
 
-✓ Successfully set 3 secret(s)
+⚠️  WARNING: All values of your .env file will be set as variables of this repository.
+Repository collaborators could have access to these values.
+See https://docs.github.com/en/actions/learn-github-actions/variables#creating-configuration-variables-for-a-repository for more info.
+
+Do you want to continue? [y/N]: y
+
+Setting variables...
+Setting variable: API_KEY...
+Setting variable: DATABASE_URL...
+Setting variable: APP_ENV...
+
+✓ Successfully set 3 variable(s)
 ```
 
 **Options:**
@@ -146,23 +170,25 @@ Setting secret: SECRET_TOKEN...
 ```env
 API_KEY=your_api_key_here
 DATABASE_URL=postgres://user:pass@localhost/db
-SECRET_TOKEN=secret123
+APP_ENV=development
 ```
 
 ---
 
 ## Example Workflow
 
+**⚠️ Important:** This tool stores values as repository variables, not secrets. Only use it for non-sensitive configuration data.
+
 1. **Initial setup on your main PC:**
    ```bash
-   # Create your .env file with secrets
-   echo "API_KEY=secret123" >> .env
-   echo "DATABASE_URL=postgres://localhost/db" >> .env
+   # Create your .env file with configuration
+   echo "API_URL=https://api.example.com" >> .env
+   echo "APP_ENV=development" >> .env
    
    # Test configuration
    uvx --refresh ghss testconf
    
-   # Push secrets to GitHub
+   # Push variables to GitHub (you'll be prompted for confirmation)
    uvx --refresh ghss set
    ```
 
@@ -172,11 +198,8 @@ SECRET_TOKEN=secret123
    git clone https://github.com/yourusername/yourrepo.git
    cd yourrepo
    
-   # Pull secret names from GitHub
+   # Pull variables from GitHub (values included!)
    uvx --refresh ghss get
-   
-   # Edit .env and fill in the values
-   nano .env
    
    # You're ready to work!
    ```
