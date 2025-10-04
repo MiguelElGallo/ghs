@@ -1,0 +1,21 @@
+[project]
+name = "ghs"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Miguel P Z", email = "60221874+MiguelElGallo@users.noreply.github.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.11.10",
+    "pydantic-settings>=2.11.0",
+    "typer>=0.19.2",
+]
+
+[project.scripts]
+ghs = "ghs:main"
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
