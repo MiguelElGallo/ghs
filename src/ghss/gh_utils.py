@@ -41,24 +41,6 @@ def get_current_repo() -> str:
     return result.stdout.strip()
 
 
-def get_secret_info(repo: str, secret_name: str) -> dict:
-    """Get secret information using GitHub API (metadata only, not the actual value)."""
-    result = run_gh_command(
-        [
-            "api",
-            "-H",
-            "Accept: application/vnd.github+json",
-            "-H",
-            "X-GitHub-Api-Version: 2022-11-28",
-            f"/repos/{repo}/actions/secrets/{secret_name}",
-        ]
-    )
-
-    import json
-
-    return json.loads(result.stdout)
-
-
 def get_variable_info(repo: str, variable_name: str) -> dict:
     """Get repository variable information using GitHub API (includes the actual value)."""
     result = run_gh_command(
