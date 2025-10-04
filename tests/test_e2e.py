@@ -14,12 +14,12 @@ runner = CliRunner()
 
 @pytest.fixture
 def e2e_test_env_file(tmp_path):
-    """Create a test .env file with test secrets."""
+    """Create a test .env file with test variables."""
     env_file = tmp_path / "test.env"
     env_file.write_text(
-        "E2E_TEST_SECRET_1=test_value_1\n"
-        "E2E_TEST_SECRET_2=test_value_2\n"
-        "E2E_TEST_SECRET_3=test_value_3\n"
+        "E2E_TEST_VARIABLE_1=test_value_1\n"
+        "E2E_TEST_VARIABLE_2=test_value_2\n"
+        "E2E_TEST_VARIABLE_3=test_value_3\n"
     )
     return env_file
 
@@ -41,22 +41,24 @@ def is_gh_authenticated():
     return result.returncode == 0
 
 
-def cleanup_e2e_secrets():
-    """Clean up any E2E test secrets from the repository."""
+def cleanup_e2e_variables():
+    """Clean up any E2E test variables from the repository."""
     try:
         result = subprocess.run(
-            ["gh", "secret", "list", "--json", "name"],
+            ["gh", "api", "/repos/{owner}/{repo}/actions/variables"],
             capture_output=True,
             text=True,
             check=False,
         )
 
         if result.returncode == 0:
-            secrets = json.loads(result.stdout)
-            for secret in secrets:
-                if secret["name"].startswith("E2E_TEST_SECRET_"):
+            data = json.loads(result.stdout)
+            variables = data.get("variables", [])
+            for variable in variables:
+                if variable["name"].startswith("E2E_TEST_VARIABLE_"):
                     subprocess.run(
-                        ["gh", "secret", "delete", secret["name"]],
+                        ["gh", "api", "--method", "DELETE", 
+                         f"/repos/{{owner}}/{{repo}}/actions/variables/{variable['name']}"],
                         capture_output=True,
                         check=False,
                     )
@@ -71,7 +73,7 @@ class TestE2EWorkflow:
     These tests require:
     - gh CLI to be installed and authenticated
     - Access to a GitHub repository
-    - Permission to create and delete secrets in that repository
+    - Permission to create and delete variables in that repository
 
     Run with: pytest -m e2e
     Skip with: pytest -m "not e2e"
@@ -87,35 +89,35 @@ class TestE2EWorkflow:
             )
 
         # Clean up before test
-        cleanup_e2e_secrets()
+        cleanup_e2e_variables()
 
         yield
 
         # Clean up after test
-        cleanup_e2e_secrets()
+        cleanup_e2e_variables()
 
-    def test_e2e_set_and_get_secrets(self, e2e_test_env_file, e2e_output_env_file):
-        """Test the complete workflow: set secrets from .env and retrieve them.
+    def test_e2e_set_and_get_variables(self, e2e_test_env_file, e2e_output_env_file):
+        """Test the complete workflow: set variables from .env and retrieve them.
 
         This test:
-        1. Sets secrets from a test .env file using the 'set' command
-        2. Retrieves secret names using the 'get' command
-        3. Compares the retrieved secret names with the original ones
+        1. Sets variables from a test .env file using the 'set' command
+        2. Retrieves variable names and values using the 'get' command
+        3. Compares the retrieved variables with the original ones
         """
-        # Step 1: Set secrets from the test .env file
-        set_result = runner.invoke(app, ["set", "-f", str(e2e_test_env_file)])
+        # Step 1: Set variables from the test .env file (auto-confirm)
+        set_result = runner.invoke(app, ["set", "-f", str(e2e_test_env_file)], input="y\n")
         assert set_result.exit_code == 0, f"Set command failed: {set_result.stdout}"
-        assert "Successfully set 3 secret(s)" in set_result.stdout
+        assert "Successfully set 3 variable(s)" in set_result.stdout
 
-        # Wait a bit for secrets to propagate
+        # Wait a bit for variables to propagate
         time.sleep(3)
 
-        # Step 2: Get secrets and write to output file
+        # Step 2: Get variables and write to output file
         get_result = runner.invoke(app, ["get", "-f", str(e2e_output_env_file)])
         assert get_result.exit_code == 0, f"Get command failed: {get_result.stdout}"
-        assert "Found 3 secret(s)" in get_result.stdout or "Found" in get_result.stdout
+        assert "Found 3 variable(s)" in get_result.stdout or "Found" in get_result.stdout
 
-        # Step 3: Read the output file and verify secret names
+        # Step 3: Read the output file and verify variable names and values
         assert e2e_output_env_file.exists(), "Output .env file was not created"
 
         output_content = e2e_output_env_file.read_text()
@@ -123,37 +125,39 @@ class TestE2EWorkflow:
             line.strip() for line in output_content.strip().split("\n") if line.strip()
         ]
 
-        # Parse secret names from output file
-        output_secrets = set()
+        # Parse variables from output file
+        output_variables = {}
         for line in output_lines:
             if "=" in line:
-                key = line.split("=")[0].strip()
-                if key.startswith("E2E_TEST_SECRET_"):
-                    output_secrets.add(key)
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip()
+                if key.startswith("E2E_TEST_VARIABLE_"):
+                    output_variables[key] = value
 
-        # Verify all test secrets are present
-        expected_secrets = {
-            "E2E_TEST_SECRET_1",
-            "E2E_TEST_SECRET_2",
-            "E2E_TEST_SECRET_3",
+        # Verify all test variables are present with correct values
+        expected_variables = {
+            "E2E_TEST_VARIABLE_1": "test_value_1",
+            "E2E_TEST_VARIABLE_2": "test_value_2",
+            "E2E_TEST_VARIABLE_3": "test_value_3",
         }
-        assert output_secrets == expected_secrets, (
-            f"Retrieved secrets {output_secrets} do not match expected {expected_secrets}"
+        assert output_variables == expected_variables, (
+            f"Retrieved variables {output_variables} do not match expected {expected_variables}"
         )
 
-        # Step 4: Read the original file and compare structure
+        # Step 4: Read the original file and compare
         original_content = e2e_test_env_file.read_text()
         original_lines = [line.strip() for line in original_content.strip().split("\n")]
 
-        original_keys = set()
+        original_variables = {}
         for line in original_lines:
             if "=" in line:
-                key = line.split("=")[0].strip()
-                original_keys.add(key)
+                key, value = line.split("=", 1)
+                original_variables[key.strip()] = value.strip()
 
-        # Verify all original keys are in output (values will be empty in output)
-        assert original_keys == output_secrets, (
-            f"Original keys {original_keys} do not match output keys {output_secrets}"
+        # Verify all original variables match output
+        assert original_variables == output_variables, (
+            f"Original variables {original_variables} do not match output variables {output_variables}"
         )
 
     def test_e2e_testconf(self):
@@ -161,9 +165,10 @@ class TestE2EWorkflow:
 
         This test runs the testconf command which:
         1. Checks authentication
-        2. Creates a test secret
-        3. Verifies the secret exists
-        4. Deletes the test secret
+        2. Creates a test variable
+        3. Verifies the variable exists
+        4. Verifies the variable value
+        5. Deletes the test variable
         """
         result = runner.invoke(app, ["testconf"])
 
@@ -179,7 +184,7 @@ class TestE2EWorkflow:
         result = runner.invoke(app, ["set", "-f", str(empty_file)])
 
         assert result.exit_code == 0
-        assert "No secrets found" in result.stdout
+        assert "No variables found" in result.stdout
 
     def test_e2e_file_not_found(self, tmp_path):
         """Test handling of non-existent file."""

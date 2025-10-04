@@ -41,24 +41,6 @@ def get_current_repo() -> str:
     return result.stdout.strip()
 
 
-def get_secret_info(repo: str, secret_name: str) -> dict:
-    """Get secret information using GitHub API (metadata only, not the actual value)."""
-    result = run_gh_command(
-        [
-            "api",
-            "-H",
-            "Accept: application/vnd.github+json",
-            "-H",
-            "X-GitHub-Api-Version: 2022-11-28",
-            f"/repos/{repo}/actions/secrets/{secret_name}",
-        ]
-    )
-
-    import json
-
-    return json.loads(result.stdout)
-
-
 def get_variable_info(repo: str, variable_name: str) -> dict:
     """Get repository variable information using GitHub API (includes the actual value)."""
     result = run_gh_command(
@@ -93,3 +75,62 @@ def list_variables(repo: str) -> dict:
     import json
 
     return json.loads(result.stdout)
+
+
+def set_variable(repo: str, variable_name: str, variable_value: str) -> None:
+    """Set a repository variable using GitHub API."""
+    import json
+
+    # First, try to update the variable (in case it exists)
+    result = run_gh_command(
+        [
+            "api",
+            "--method",
+            "PATCH",
+            "-H",
+            "Accept: application/vnd.github+json",
+            "-H",
+            "X-GitHub-Api-Version: 2022-11-28",
+            f"/repos/{repo}/actions/variables/{variable_name}",
+            "-f",
+            f"name={variable_name}",
+            "-f",
+            f"value={variable_value}",
+        ],
+        check=False,
+    )
+
+    # If update failed (404 - variable doesn't exist), create it
+    if result.returncode != 0:
+        run_gh_command(
+            [
+                "api",
+                "--method",
+                "POST",
+                "-H",
+                "Accept: application/vnd.github+json",
+                "-H",
+                "X-GitHub-Api-Version: 2022-11-28",
+                f"/repos/{repo}/actions/variables",
+                "-f",
+                f"name={variable_name}",
+                "-f",
+                f"value={variable_value}",
+            ]
+        )
+
+
+def delete_variable(repo: str, variable_name: str) -> None:
+    """Delete a repository variable using GitHub API."""
+    run_gh_command(
+        [
+            "api",
+            "--method",
+            "DELETE",
+            "-H",
+            "Accept: application/vnd.github+json",
+            "-H",
+            "X-GitHub-Api-Version: 2022-11-28",
+            f"/repos/{repo}/actions/variables/{variable_name}",
+        ]
+    )
