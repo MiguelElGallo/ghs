@@ -14,8 +14,23 @@ dependencies = [
     "typer>=0.19.2",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+]
+
 [project.scripts]
 ghs = "ghs:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "e2e: marks tests as end-to-end tests (deselect with '-m \"not e2e\"')",
+]
 
 [build-system]
 requires = ["uv_build>=0.8.22,<0.9.0"]
