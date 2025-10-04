@@ -5,6 +5,8 @@
 
 Sync your `.env` files with GitHub Secrets in both directions using a simple CLI tool.
 
+![alt text](media/ghss.png)
+
 ## What it does
 
 `ghss` synchronizes environment variables between your local `.env` files and GitHub repository secrets. You can push secrets from your local environment to GitHub or pull secret names from GitHub to create a template `.env` file.
