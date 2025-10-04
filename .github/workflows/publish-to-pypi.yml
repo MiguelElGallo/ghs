@@ -28,6 +28,9 @@ jobs:
       - name: Set up Python
         run: uv python install 3.13
       
+      - name: Clean build directory
+        run: rm -rf dist/
+      
       - name: Build package
         run: uv build
       
