@@ -1,6 +1,6 @@
 [project]
 name = "ghss"
-version = "0.1.0"
+version = "0.1.1"
 description = "Sync your .env files with Github Secrets"
 readme = "README.md"
 authors = [
