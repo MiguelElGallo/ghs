@@ -1,0 +1,143 @@
+# ELT Snowflake High Performance Pipeline Configuration
+# Copy this file to .env and configure your values
+
+# =============================================================================
+# ENVIRONMENT SETTINGS
+# =============================================================================
+ENVIRONMENT=development
+REGION=eastus
+ENABLE_DETAILED_LOGGING=false
+LOG_MESSAGE_SAMPLES=false
+METRICS_COLLECTION_ENABLED=true
+
+# =============================================================================
+# EVENTHUB CONFIGURATION
+# =============================================================================
+# Core EventHub namespace (required)
+EVENTHUB_NAMESPACE=your-eventhub-namespace.servicebus.windows.net
+
+# EventHub instances (you can configure multiple)
+# Format: EVENTHUBNAME_{N} where N is a sequence number
+EVENTHUBNAME_1=events-topic-1
+EVENTHUBNAME_1_CONSUMER_GROUP=$Default
+
+EVENTHUBNAME_2=events-topic-2
+EVENTHUBNAME_2_CONSUMER_GROUP=elt-consumer
+
+# Optional EventHub performance tuning
+# EVENTHUB_MAX_BATCH_SIZE=1000
+# EVENTHUB_MAX_WAIT_TIME=60
+# EVENTHUB_PREFETCH_COUNT=300
+# EVENTHUB_CHECKPOINT_INTERVAL_SECONDS=300
+# EVENTHUB_MAX_MESSAGE_BATCH_SIZE=1000
+# EVENTHUB_BATCH_TIMEOUT_SECONDS=300
+
+# =============================================================================
+# SNOWFLAKE CONFIGURATION
+# =============================================================================
+# Snowflake connection parameters (for Snowpark/regular connection)
+SNOWFLAKE_ACCOUNT=your-account.snowflakecomputing.com
+SNOWFLAKE_USER=your-username
+SNOWFLAKE_PRIVATE_KEY_FILE=./keys/rsa_key.p8
+SNOWFLAKE_PRIVATE_KEY_PASSWORD=your-key-password
+SNOWFLAKE_WAREHOUSE=your-warehouse
+SNOWFLAKE_DATABASE=your-database
+SNOWFLAKE_SCHEMA=your-schema
+TARGET_DB=your-target-database
+TARGET_SCHEMA=your-target-schema
+TARGET_TABLE=your-target-table
+
+# Snowflake Streaming configurations (you can configure multiple)
+# Format: SNOWPIPE_{N}_* where N matches EventHub numbers for automatic mapping
+SNOWPIPE_1_DATABASE=analytics_db
+SNOWPIPE_1_SCHEMA=events_schema
+SNOWPIPE_1_PIPE=events_pipe_1
+SNOWPIPE_1_PROFILE=./profile.json
+SNOWPIPE_1_TABLE=events_table_1
+
+SNOWPIPE_2_DATABASE=analytics_db
+SNOWPIPE_2_SCHEMA=events_schema
+SNOWPIPE_2_PIPE=events_pipe_2
+SNOWPIPE_2_PROFILE=./profile.json
+SNOWPIPE_2_TABLE=events_table_2
+
+# Optional Snowflake performance tuning
+# SNOWFLAKE_CLIENT_NAME_PREFIX=elt-snowhp
+# SNOWFLAKE_BATCH_SIZE=1000
+# SNOWFLAKE_CHANNEL_TIMEOUT_MS=30000
+# SNOWFLAKE_MAX_CHANNELS_PER_CLIENT=10
+# SNOWFLAKE_INGESTION_POLL_ATTEMPTS=30
+# SNOWFLAKE_INGESTION_POLL_INTERVAL_MS=1000
+# SNOWFLAKE_MAX_RETRY_ATTEMPTS=3
+# SNOWFLAKE_RETRY_DELAY_SECONDS=5
+
+# =============================================================================
+# PIPELINE PERFORMANCE SETTINGS
+# =============================================================================
+# Maximum concurrent operations
+MAX_CONCURRENT_CHANNELS=50
+MAX_CONCURRENT_MAPPINGS=10
+
+# Timeouts and intervals
+INGESTION_TIMEOUT_SECONDS=300
+HEALTH_CHECK_INTERVAL_SECONDS=60
+
+# Error handling and retry policies
+MAX_PIPELINE_RESTART_ATTEMPTS=3
+PIPELINE_RESTART_DELAY_SECONDS=30
+
+# =============================================================================
+# AUTOMATIC MAPPING
+# =============================================================================
+# Mappings are automatically created based on matching numbers:
+# EVENTHUBNAME_1 -> SNOWPIPE_1
+# EVENTHUBNAME_2 -> SNOWPIPE_2
+# etc.
+#
+# The pipeline will create the following mappings:
+# - events-topic-1 -> analytics_db.events_schema.events_pipe_1
+# - events-topic-2 -> analytics_db.events_schema.events_pipe_2
+
+# =============================================================================
+# AZURE AUTHENTICATION
+# =============================================================================
+# The pipeline uses DefaultAzureCredential for EventHub authentication.
+# You can authenticate using:
+# 1. Environment variables (AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID)
+# 2. Managed Identity (when running in Azure)
+# 3. Azure CLI (az login)
+# 4. Visual Studio / VS Code
+#
+# For local development, use: az login
+
+# =============================================================================
+# SNOWFLAKE PROFILE.JSON
+# =============================================================================
+# Create a profile.json file with your Snowflake connection details:
+# {
+#   "account": "your-account.snowflakecomputing.com",
+#   "user": "your-username",
+#   "private_key_file": "./keys/rsa_key.p8",
+#   "private_key_file_pwd": "your-key-password",
+#   "warehouse": "your-warehouse",
+#   "database": "your-database",
+#   "schema": "your-schema"
+# }
+
+# =============================================================================
+# USAGE EXAMPLES
+# =============================================================================
+# Validate configuration:
+# elt-snowhp validate-config
+#
+# Show pipeline status:
+# elt-snowhp status
+#
+# Run in dry-run mode:
+# elt-snowhp run --dry-run
+#
+# Run the pipeline:
+# elt-snowhp run
+#
+# Use custom config file:
+# elt-snowhp run --env-file custom.env
