@@ -1,5 +1,5 @@
 [project]
-name = "ghs"
+name = "ghss"
 version = "0.1.0"
 description = "Sync your .env files with Github Secrets"
 readme = "README.md"
@@ -35,7 +35,7 @@ dev = [
 ]
 
 [project.scripts]
-ghs = "ghs:main"
+ghss = "ghs:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
