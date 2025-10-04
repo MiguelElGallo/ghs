@@ -3,9 +3,9 @@ import json
 import random
 import string
 import time
+from typing import Annotated
 
 import typer
-from typing_extensions import Annotated
 
 from .env_utils import load_env_file, write_env_file
 from .gh_utils import check_gh_auth, get_current_repo, run_gh_command
@@ -126,6 +126,6 @@ def set(
 
     for key, value in secrets_to_set.items():
         typer.echo(f"Setting secret: {key}...")
-        result = run_gh_command(["secret", "set", key, "--body", value, "--repo", repo])
+        run_gh_command(["secret", "set", key, "--body", value, "--repo", repo])
 
     typer.echo(f"\n✓ Successfully set {len(secrets_to_set)} secret(s)")

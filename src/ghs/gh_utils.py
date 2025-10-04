@@ -1,11 +1,12 @@
 """GitHub CLI utility functions."""
-import json
 import subprocess
 
 import typer
 
 
-def run_gh_command(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
+def run_gh_command(
+    args: list[str], check: bool = True
+) -> subprocess.CompletedProcess[str]:
     """Run a gh CLI command and return the result."""
     result = subprocess.run(
         ["gh"] + args,
