@@ -1,18 +1,32 @@
 [project]
 name = "ghs"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sync your .env files with Github Secrets"
 readme = "README.md"
 authors = [
     { name = "Miguel P Z", email = "60221874+MiguelElGallo@users.noreply.github.com" }
 ]
 requires-python = ">=3.13"
+license = { text = "MIT" }
+keywords = ["github", "secrets", "env", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "pydantic>=2.11.10",
     "pydantic-settings>=2.11.0",
     "python-dotenv>=1.0.0",
     "typer>=0.19.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/MiguelElGallo/ghs"
+Repository = "https://github.com/MiguelElGallo/ghs"
+Issues = "https://github.com/MiguelElGallo/ghs/issues"
 
 [project.optional-dependencies]
 dev = [
