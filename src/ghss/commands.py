@@ -1,4 +1,5 @@
 """CLI command implementations."""
+
 import json
 import random
 import string
@@ -8,7 +9,14 @@ import typer
 from typing_extensions import Annotated
 
 from .env_utils import load_env_file, write_env_file
-from .gh_utils import check_gh_auth, get_current_repo, run_gh_command
+from .gh_utils import (
+    check_gh_auth,
+    get_current_repo,
+    get_secret_info,
+    get_variable_info,
+    list_variables,
+    run_gh_command,
+)
 
 app = typer.Typer(help="Sync your .env files with Github Secrets")
 
@@ -129,3 +137,101 @@ def set(
         result = run_gh_command(["secret", "set", key, "--body", value, "--repo", repo])
 
     typer.echo(f"\n✓ Successfully set {len(secrets_to_set)} secret(s)")
+
+
+@app.command()
+def get_secret(
+    secret_name: Annotated[
+        str, typer.Argument(help="Name of the secret to retrieve info for")
+    ],
+) -> None:
+    """Get information about a specific secret (metadata only, not the actual value)."""
+    typer.echo("Checking gh CLI authentication...")
+    check_gh_auth()
+
+    repo = get_current_repo()
+    typer.echo(f"Getting secret info from repository: {repo}")
+
+    try:
+        secret_info = get_secret_info(repo, secret_name)
+
+        typer.echo(f"\n✓ Secret '{secret_name}' found!")
+        typer.echo(f"Name: {secret_info.get('name', 'N/A')}")
+        typer.echo(f"Created at: {secret_info.get('created_at', 'N/A')}")
+        typer.echo(f"Updated at: {secret_info.get('updated_at', 'N/A')}")
+
+        # Note: The actual secret value is never returned by the API for security reasons
+        typer.echo(
+            "\nNote: The actual secret value cannot be retrieved via the API for security reasons."
+        )
+
+    except typer.Exit:
+        typer.echo(f"✗ Secret '{secret_name}' not found or error occurred", err=True)
+        raise
+
+
+@app.command()
+def get_variable(
+    variable_name: Annotated[
+        str, typer.Argument(help="Name of the variable to retrieve")
+    ],
+) -> None:
+    """Get information about a specific repository variable (including the actual value)."""
+    typer.echo("Checking gh CLI authentication...")
+    check_gh_auth()
+
+    repo = get_current_repo()
+    typer.echo(f"Getting variable info from repository: {repo}")
+
+    try:
+        variable_info = get_variable_info(repo, variable_name)
+
+        typer.echo(f"\n✓ Variable '{variable_name}' found!")
+        typer.echo(f"Name: {variable_info.get('name', 'N/A')}")
+        typer.echo(f"Value: {variable_info.get('value', 'N/A')}")
+        typer.echo(f"Created at: {variable_info.get('created_at', 'N/A')}")
+        typer.echo(f"Updated at: {variable_info.get('updated_at', 'N/A')}")
+
+        typer.echo(
+            "\n⚠️  WARNING: Variable values are retrievable via API and may be visible to repository collaborators!"
+        )
+
+    except typer.Exit:
+        typer.echo(
+            f"✗ Variable '{variable_name}' not found or error occurred", err=True
+        )
+        raise
+
+
+@app.command()
+def list_vars() -> None:
+    """List all repository variables (including their actual values)."""
+    typer.echo("Checking gh CLI authentication...")
+    check_gh_auth()
+
+    repo = get_current_repo()
+    typer.echo(f"Getting variables from repository: {repo}")
+
+    try:
+        variables_data = list_variables(repo)
+        variables = variables_data.get("variables", [])
+
+        if not variables:
+            typer.echo("No variables found in repository.")
+            return
+
+        typer.echo(f"\n✓ Found {len(variables)} variable(s):")
+
+        for var in variables:
+            typer.echo(f"\n  Name: {var.get('name', 'N/A')}")
+            typer.echo(f"  Value: {var.get('value', 'N/A')}")
+            typer.echo(f"  Created: {var.get('created_at', 'N/A')}")
+            typer.echo(f"  Updated: {var.get('updated_at', 'N/A')}")
+
+        typer.echo(
+            "\n⚠️  WARNING: Variable values are retrievable via API and may be visible to repository collaborators!"
+        )
+
+    except typer.Exit:
+        typer.echo("✗ Error retrieving variables", err=True)
+        raise
