@@ -1,5 +1,5 @@
 """GitHub CLI utility functions."""
-import json
+
 import subprocess
 
 import typer
