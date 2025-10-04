@@ -81,25 +81,25 @@ class TestWriteEnvFile:
     """Tests for write_env_file function."""
 
     def test_write_env_file_success(self, tmp_path):
-        """Test writing secrets to a .env file."""
+        """Test writing variables to a .env file."""
         env_file = tmp_path / ".env"
-        secrets = [
-            {"name": "SECRET1"},
-            {"name": "SECRET2"},
-            {"name": "SECRET3"},
+        variables = [
+            {"name": "VAR1", "value": "value1"},
+            {"name": "VAR2", "value": "value2"},
+            {"name": "VAR3", "value": "value3"},
         ]
 
-        write_env_file(str(env_file), secrets)
+        write_env_file(str(env_file), variables)
 
         content = env_file.read_text()
-        assert content == "SECRET1=\nSECRET2=\nSECRET3=\n"
+        assert content == "VAR1=value1\nVAR2=value2\nVAR3=value3\n"
 
     def test_write_env_file_empty_list(self, tmp_path):
-        """Test writing empty secrets list creates empty file."""
+        """Test writing empty variables list creates empty file."""
         env_file = tmp_path / ".env"
-        secrets = []
+        variables = []
 
-        write_env_file(str(env_file), secrets)
+        write_env_file(str(env_file), variables)
 
         content = env_file.read_text()
         assert content == ""
@@ -109,18 +109,28 @@ class TestWriteEnvFile:
         env_file = tmp_path / ".env"
         env_file.write_text("OLD_CONTENT=old_value\n")
 
-        secrets = [{"name": "NEW_SECRET"}]
-        write_env_file(str(env_file), secrets)
+        variables = [{"name": "NEW_VAR", "value": "new_value"}]
+        write_env_file(str(env_file), variables)
 
         content = env_file.read_text()
-        assert content == "NEW_SECRET=\n"
+        assert content == "NEW_VAR=new_value\n"
 
-    def test_write_env_file_single_secret(self, tmp_path):
-        """Test writing a single secret."""
+    def test_write_env_file_single_variable(self, tmp_path):
+        """Test writing a single variable."""
         env_file = tmp_path / ".env"
-        secrets = [{"name": "SINGLE_SECRET"}]
+        variables = [{"name": "SINGLE_VAR", "value": "single_value"}]
 
-        write_env_file(str(env_file), secrets)
+        write_env_file(str(env_file), variables)
 
         content = env_file.read_text()
-        assert content == "SINGLE_SECRET=\n"
+        assert content == "SINGLE_VAR=single_value\n"
+    
+    def test_write_env_file_empty_value(self, tmp_path):
+        """Test writing a variable with empty value."""
+        env_file = tmp_path / ".env"
+        variables = [{"name": "EMPTY_VAR", "value": ""}]
+
+        write_env_file(str(env_file), variables)
+
+        content = env_file.read_text()
+        assert content == "EMPTY_VAR=\n"
