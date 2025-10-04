@@ -1,0 +1,34 @@
+name: Publish to PyPI
+
+# Run this workflow when a new release is published
+on:
+  release:
+    types: [published]
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    name: Build and publish Python distribution to PyPI
+    runs-on: ubuntu-latest
+    
+    # Set up permissions for trusted publishing
+    permissions:
+      id-token: write  # Required for trusted publishing to PyPI
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      
+      - name: Set up Python
+        run: uv python install 3.13
+      
+      - name: Build package
+        run: uv build
+      
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always
