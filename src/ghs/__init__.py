@@ -1,9 +1,6 @@
 import json
-import os
 import subprocess
-import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from typing_extensions import Annotated
