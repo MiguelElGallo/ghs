@@ -12,6 +12,10 @@ The third command is set which will read a .env file and set the secrets in the 
 
 ## Authentication
 
-The tool will use the GITHUB_TOKEN environment variable to authenticate with the Github API. you can create a personal access token with the repo scope and set it as an environment variable.
+Make sure testconf checks the gh CLI tool is installed and authenticated. You can do this by running `gh auth login` and following the prompts.
+
+
+
+
 
 
